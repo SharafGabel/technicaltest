@@ -1,20 +1,22 @@
 package com.example.sgabel.myapplication
 
 import android.app.Application
+import com.example.sgabel.myapplication.injection.component.DaggerNetworkComponent
 import com.example.sgabel.myapplication.injection.component.NetworkComponent
 import com.example.sgabel.myapplication.injection.module.AppModule
 import com.example.sgabel.myapplication.injection.module.NetworkModule
 
 class App() : Application() {
-    private lateinit var mNetworkComponent: NetworkComponent
+    private val mNetworkComponent: NetworkComponent by lazy {
+        DaggerNetworkComponent.builder()
+                .appModule(AppModule(this))
+                .networkModule(NetworkModule("http://www.google.com"))
+                .build();
+    }
 
 
     override fun onCreate() {
         super.onCreate()
-        mNetworkComponent = DaggerNetworkComponent.builder
-                .appModule(AppModule(this))
-                .networkModule(NetworkModule("http://www.google.com"))
-                .build();
         mNetworkComponent.inject(this)
     }
 

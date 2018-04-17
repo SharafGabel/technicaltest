@@ -12,6 +12,11 @@ import javax.inject.Singleton
 
 @Module
 class NetworkModule(var mBaseUrl: String) {
+
+    @Provides
+    @Singleton
+    fun provideBaseUrl() = mBaseUrl
+
     @Provides
     @Singleton
     fun provideHttpCache(pApplication: Application): Cache {
