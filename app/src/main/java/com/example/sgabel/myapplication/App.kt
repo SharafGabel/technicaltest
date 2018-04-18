@@ -6,18 +6,22 @@ import com.example.sgabel.myapplication.injection.component.NetworkComponent
 import com.example.sgabel.myapplication.injection.module.AppModule
 import com.example.sgabel.myapplication.injection.module.NetworkModule
 
-class App() : Application() {
+class App : Application() {
+
+
+
+
     private val mNetworkComponent: NetworkComponent by lazy {
         DaggerNetworkComponent.builder()
                 .appModule(AppModule(this))
-                .networkModule(NetworkModule("http://www.google.com"))
+                .networkModule(NetworkModule("http://private-2c2b2-nodes4.apiary-mock.com/nodes/"))
                 .build();
     }
 
 
     override fun onCreate() {
         super.onCreate()
-        mNetworkComponent.inject(this)
+
     }
 
     fun getNetworkComponent(): NetworkComponent {
