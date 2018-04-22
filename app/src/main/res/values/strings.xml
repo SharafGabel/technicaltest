@@ -3,4 +3,5 @@
     <string name="mainTitle">My documents</string>
     <string name="descriptionImageDefault">my picture</string>
     <string name="noApplicationFound">No application found for this media</string>
+    <string name="filterHint">Write to filter</string>
 </resources>

@@ -9,7 +9,7 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:name=".App"
-        android:theme="@style/Base.Theme.AppCompat.Light">
+        android:theme="@style/Theme.AppCompat.DayNight.DarkActionBar">
         <activity android:name=".MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -19,10 +19,10 @@
         </activity>
         <activity
             android:name=".MediaActivity"
-            android:configChanges="orientation|screenSize"></activity>
+            android:configChanges="orientation|screenSize" />
         <activity
             android:name=".ParentActivity"
-            android:configChanges="orientation|screenSize"></activity>
+            android:configChanges="orientation|screenSize" />
     </application>
 
     <uses-permission android:name="android.permission.INTERNET" />

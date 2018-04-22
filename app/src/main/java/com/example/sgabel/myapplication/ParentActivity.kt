@@ -6,6 +6,7 @@ import retrofit2.Retrofit
 import javax.inject.Inject
 
 open class ParentActivity : AppCompatActivity() {
+
     @Inject
     lateinit var mRetrofit: Retrofit
 
@@ -15,4 +16,6 @@ open class ParentActivity : AppCompatActivity() {
         }
         return super.onOptionsItemSelected(item)
     }
+
+
 }

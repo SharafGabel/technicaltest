@@ -12,12 +12,12 @@ import butterknife.ButterKnife
 import com.example.sgabel.myapplication.api.ApiManager
 import com.example.sgabel.myapplication.model.File
 import com.example.sgabel.myapplication.model.MediaType
-import retrofit2.Call
-import retrofit2.Callback
-import retrofit2.Response
+import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.schedulers.Schedulers
+import okhttp3.ResponseBody
 
 
-class MainActivity : ParentActivity(), SwipeRefreshLayout.OnRefreshListener {
+class MainActivity : ParentActivity(), SwipeRefreshLayout.OnRefreshListener, RxCallback<File> {
 
     @BindView(R.id.recyclerview)
     lateinit var mRecyclerview: RecyclerView
@@ -41,13 +41,18 @@ class MainActivity : ParentActivity(), SwipeRefreshLayout.OnRefreshListener {
             setTitle(getString(R.string.mainTitle))
         }
         if (intent != null && intent.extras != null) {
-            if (intent.extras.getString(Constants.PATH) == null || (intent.extras.getString(Constants.PATH) != null && !intent.extras.getString(Constants.PATH).equals(""))) {
+            if (intent.extras.getString(Constants.PATH) == null || (intent.extras.getString(Constants.PATH) != null && intent.extras.getString(Constants.PATH).equals(""))) {
+                mPath = "/nodes"
+                supportActionBar?.setDisplayHomeAsUpEnabled(true)
+            } else {
                 mPath = intent.extras.getString(Constants.PATH)
                 supportActionBar?.setDisplayHomeAsUpEnabled(true)
             }
 
-            if (!intent.extras.getString(Constants.TITLE).equals(""))
+            if (intent.extras.getString(Constants.TITLE) != null && !intent.extras.getString(Constants.TITLE).equals(""))
                 setTitle(intent.extras.getString(Constants.TITLE))
+            else
+                setTitle(getString(R.string.mainTitle))
         }
 
         getAllFiles(mPath)
@@ -61,8 +66,8 @@ class MainActivity : ParentActivity(), SwipeRefreshLayout.OnRefreshListener {
         val mLayoutManager: RecyclerView.LayoutManager = LinearLayoutManager(getApplicationContext());
 
         mRecyclerview.setLayoutManager(mLayoutManager);
-        mRecyclerview.setItemAnimator(DefaultItemAnimator());
-        mRecyclerview.setAdapter(mFilesAdapter);
+        mRecyclerview.setItemAnimator(DefaultItemAnimator())
+        mRecyclerview.setAdapter(mFilesAdapter)
         mFilesAdapter!!.notifyDataSetChanged()
     }
 
@@ -79,40 +84,37 @@ class MainActivity : ParentActivity(), SwipeRefreshLayout.OnRefreshListener {
         return vListTmp
     }
 
-    /***
-     * TODO : Add Observable for knowing when call has been done
-     */
-    fun getAllFiles(pPath: String) {
-        val vFiles = mRetrofit.create(ApiManager.RestApi::class.java).getFiles(pPath)
-        Log.d("url used", Constants.mBaseUrl + pPath)
+    override fun handleResultList(pFiles: List<File>) {
+        if (pFiles != null) {
+            attachAdapterAndRecyclerview(pFiles)
+        } else
+            Toast.makeText(applicationContext, "no body response ", Toast.LENGTH_LONG).show()
 
-        vFiles.enqueue(
-                object : Callback<List<File>> {
+        if (mSwipeRefreshLayout.isRefreshing) {
+            mSwipeRefreshLayout.setRefreshing(false)
 
-                    override fun onResponse(call: Call<List<File>>, response: Response<List<File>>) {
-                        //Set the response to the textview
-                        //Toast.makeText(applicationContext,"body : "+ response.body(), Toast.LENGTH_LONG).show()
-                        Log.d("b", "body : " + response.body())
-                        if (response.body() != null) {
-                            //Toast.makeText(applicationContext, "body : "+response.body(), Toast.LENGTH_LONG).show()
-                            attachAdapterAndRecyclerview(response.body())
-                        } else
-                            Toast.makeText(applicationContext, "no body response ", Toast.LENGTH_LONG).show()
-
-                        if (mSwipeRefreshLayout.isRefreshing) {
-                            mSwipeRefreshLayout.setRefreshing(false)
-
-                        }
-
-                    }
-
-                    override fun onFailure(call: Call<List<File>>, t: Throwable) {
-                        //Set the error to the textview
-                        Toast.makeText(applicationContext, "error receiving data", Toast.LENGTH_LONG).show()
-                    }
-                })
+        }
     }
 
+    override fun handleResultResponse(pResponse: ResponseBody) {
+    }
+
+    override fun handleError(pThrowable: Throwable) {
+        Toast.makeText(applicationContext, "error receiving data : " + pThrowable.message, Toast.LENGTH_LONG).show()
+
+    }
+
+    fun getAllFiles(pPath: String) {
+        mRetrofit.create(ApiManager.RestApi::class.java)
+                .getFiles(pPath).subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(this::handleResultList, this::handleError)
+        Log.d("url used", Constants.mBaseUrl + pPath)
+    }
+
+    /**
+     * Refresh data from server
+     */
     override fun onRefresh() {
         getAllFiles(mPath)
     }

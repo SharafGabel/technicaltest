@@ -7,18 +7,24 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
+import android.widget.LinearLayout
 import android.widget.TextView
 import com.example.sgabel.myapplication.model.File
 
-class FilesAdapter(private val fileList: List<File>?, var mActivity: MainActivity) : RecyclerView.Adapter<FilesAdapter.MyViewHolder>() {
+class FilesAdapter(var fileList: List<File>?, var mActivity: MainActivity) : RecyclerView.Adapter<FilesAdapter.MyViewHolder>() {
+
+    var fileListFilter: List<File> = fileList!!
 
     inner class MyViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         var tv_namefile: TextView
         var iv_Folder: ImageView
+        var mItemView: LinearLayout
+
 
         init {
             tv_namefile = view.findViewById(R.id.namefile)
             iv_Folder = view.findViewById(R.id.ivFolder)
+            mItemView = view.findViewById(R.id.itemView)
         }
     }
 
@@ -39,9 +45,9 @@ class FilesAdapter(private val fileList: List<File>?, var mActivity: MainActivit
             holder.iv_Folder.visibility = View.GONE
         }
 
-        if (vFile.extension.equals("directory")) {
+        if (vFile.extension.equals(Constants.DIRECTORY_STR)) {
             holder.tv_namefile.setText(vFile.name)
-            holder.tv_namefile.setOnClickListener({
+            holder.mItemView.setOnClickListener({
                 Constants.mPath += vFile.path!!
                 Log.d("url", Constants.mBaseUrl + Constants.mPath)
                 val vIntent = Intent(mActivity, MainActivity::class.java)
@@ -52,7 +58,7 @@ class FilesAdapter(private val fileList: List<File>?, var mActivity: MainActivit
             })
         } else {
             holder.tv_namefile.text = String.format(vFile.name + vFile.extension)
-            holder.tv_namefile.setOnClickListener(View.OnClickListener {
+            holder.mItemView.setOnClickListener({
                 val vIntent = Intent(mActivity, MediaActivity::class.java)
                 vIntent.putExtra(Constants.URL, vFile.url)
                 vIntent.putExtra(Constants.TITLE, vFile.name)
@@ -69,6 +75,10 @@ class FilesAdapter(private val fileList: List<File>?, var mActivity: MainActivit
     }
 
     override fun getItemViewType(position: Int): Int {
-        return if (fileList?.get(position)?.extension.equals("directory")) Constants.DIRECTORY else Constants.FILE
+        return if (fileList?.get(position)?.extension.equals(Constants.DIRECTORY_STR)) Constants.DIRECTORY else Constants.FILE
+    }
+
+    init {
+        this.fileListFilter = fileList!!
     }
 }

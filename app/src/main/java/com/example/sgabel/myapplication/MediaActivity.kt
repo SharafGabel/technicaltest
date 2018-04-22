@@ -15,13 +15,11 @@ import butterknife.ButterKnife
 import com.bumptech.glide.Glide
 import com.example.sgabel.myapplication.api.ApiManager
 import com.example.sgabel.myapplication.model.MediaType
+import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.schedulers.Schedulers
 import okhttp3.ResponseBody
-import retrofit2.Call
-import retrofit2.Callback
-import retrofit2.Response
 
-class MediaActivity : ParentActivity() {
-
+class MediaActivity : ParentActivity(), RxCallback<ResponseBody> {
 
     @BindView(R.id.playerView)
     lateinit var mVideoView: VideoView
@@ -85,33 +83,16 @@ class MediaActivity : ParentActivity() {
     }
 
     fun downloadFile(pUrl: String?, pIv: ImageView) {
-        val vFileDownloaded = mRetrofit.create(ApiManager.RestApi::class.java).downloadFile(pUrl)
+
+        mRetrofit.create(ApiManager.RestApi::class.java)
+                .downloadFile(pUrl).subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(this::handleResultResponse, this::handleError)
+
         Log.d("url used", pUrl)
 
         mProgressBar.visibility = View.VISIBLE
 
-        vFileDownloaded.enqueue(
-                object : Callback<ResponseBody> {
-
-                    override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
-                        Log.d("b", "body : " + response.body())
-
-
-
-                        if (response.body() != null) {
-                            val vBm = BitmapFactory.decodeStream(response.body().byteStream())
-                            pIv.setImageBitmap(vBm)
-                            mProgressBar.visibility = View.GONE
-                        } else
-                            Toast.makeText(applicationContext, "no body response ", Toast.LENGTH_LONG).show()
-
-                    }
-
-                    override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
-                        //Set the error to the textview
-                        Toast.makeText(applicationContext, "error receiving data", Toast.LENGTH_LONG).show()
-                    }
-                });
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
@@ -123,6 +104,24 @@ class MediaActivity : ParentActivity() {
 
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
+    }
+
+    override fun handleError(pThrowable: Throwable) {
+        Toast.makeText(applicationContext, "error receiving data : " + pThrowable.message, Toast.LENGTH_LONG).show()
+    }
+
+    override fun handleResultResponse(pResponseBody: ResponseBody) {
+        Log.d("b", "body : " + pResponseBody)
+
+        if (pResponseBody != null) {
+            val vBm = BitmapFactory.decodeStream(pResponseBody!!.byteStream())
+            mImageView.setImageBitmap(vBm)
+            mProgressBar.visibility = View.GONE
+        } else
+            Toast.makeText(applicationContext, "no body response ", Toast.LENGTH_LONG).show()
+    }
+
+    override fun handleResultList(pList: List<ResponseBody>) {
     }
 
 }

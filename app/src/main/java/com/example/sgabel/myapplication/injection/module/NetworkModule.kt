@@ -8,6 +8,7 @@ import dagger.Provides
 import okhttp3.Cache
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
+import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory
 import retrofit2.converter.gson.GsonConverterFactory
 import javax.inject.Singleton
 
@@ -38,6 +39,7 @@ class NetworkModule(var mBaseUrl: String) {
     fun provideRetrofit(pGson: Gson, pOkHttpClient: OkHttpClient): Retrofit {
         return Retrofit.Builder()
                 .addConverterFactory(GsonConverterFactory.create(pGson))
+                .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
                 .baseUrl(mBaseUrl + Constants.mPath)
                 .client(pOkHttpClient)
                 .build()
