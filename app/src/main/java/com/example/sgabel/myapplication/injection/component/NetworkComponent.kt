@@ -1,6 +1,7 @@
 package com.example.sgabel.myapplication.injection.component
 
 import com.example.sgabel.myapplication.MainActivity
+import com.example.sgabel.myapplication.MediaActivity
 import com.example.sgabel.myapplication.injection.module.AppModule
 import com.example.sgabel.myapplication.injection.module.NetworkModule
 import dagger.Component
@@ -11,4 +12,6 @@ import javax.inject.Singleton
 interface NetworkComponent {
 
     fun inject(pActivity: MainActivity)
+
+    fun inject(pMediaActivity: MediaActivity)
 }

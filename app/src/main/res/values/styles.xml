@@ -8,4 +8,16 @@
         <item name="colorAccent">@color/colorAccent</item>
     </style>
 
+    <style name="centerContainerWithMargin" parent="android:Theme">
+        <item name="android:gravity">center</item>
+        <item name="android:layout_margin">25dp</item>
+    </style>
+
+    <style name="mainAppearance" parent="android:TextAppearance">
+        <item name="android:layout_margin">20dp</item>
+        <item name="android:layout_marginStart">10dp</item>
+        <item name="android:textColor">@color/colorPrimaryDark</item>
+        <item name="android:textSize">8pt</item>
+    </style>
+
 </resources>

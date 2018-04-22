@@ -1,30 +1,38 @@
 package com.example.sgabel.myapplication.model
 
 class File {
-    private var id: Int? = null
+    var id: Int? = null
         get
         set
 
-    private var name: String? = null
+    var name: String? = null
         get
         set
 
-    private var mimetype: String? = null
+    var mimetype: String? = null
         get
         set
 
-    private var size: Int? = null
+    var size: Int? = null
         get
         set
 
-    private var modification_time: Long? = null
+    var modification_time: Long? = null
         get
         set
 
-    private var path: String? = null
+    var path: String? = null
         get
 
-    private var url: String? = null
+    var url: String? = null
+        get
+        set
+
+    var extension: String? = null
+        get
+        set
+
+    var mediaType: MediaType? = null
         get
         set
 

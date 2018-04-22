@@ -9,7 +9,7 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:name=".App"
-        android:theme="@style/AppTheme">
+        android:theme="@style/Base.Theme.AppCompat.Light">
         <activity android:name=".MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -17,6 +17,12 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity
+            android:name=".MediaActivity"
+            android:configChanges="orientation|screenSize"></activity>
+        <activity
+            android:name=".ParentActivity"
+            android:configChanges="orientation|screenSize"></activity>
     </application>
 
     <uses-permission android:name="android.permission.INTERNET" />
