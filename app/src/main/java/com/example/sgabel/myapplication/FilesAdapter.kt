@@ -1,21 +1,24 @@
 package com.example.sgabel.myapplication
 
-import android.content.Intent
 import android.support.v7.widget.RecyclerView
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
+import com.example.sgabel.myapplication.activity.FileExplorerActivity
+import com.example.sgabel.myapplication.activity.RowViewItf
+import com.example.sgabel.myapplication.interactor.FilesAdapterInteractor
 import com.example.sgabel.myapplication.model.File
+import com.example.sgabel.myapplication.presenter.FilesAdapterPresenter
 
-class FilesAdapter(var fileList: List<File>?, var mActivity: MainActivity) : RecyclerView.Adapter<FilesAdapter.MyViewHolder>() {
+class FilesAdapter(fileList: List<File>?, mActivity: FileExplorerActivity) : RecyclerView.Adapter<FilesAdapter.MyViewHolder>() {
 
-    var fileListFilter: List<File> = fileList!!
+    var mFilesAdapterPresenter: FilesAdapterPresenter = FilesAdapterPresenter(fileList, mActivity, FilesAdapterInteractor())
 
-    inner class MyViewHolder(view: View) : RecyclerView.ViewHolder(view) {
+    inner class MyViewHolder(view: View) : RecyclerView.ViewHolder(view), RowViewItf {
+
         var tv_namefile: TextView
         var iv_Folder: ImageView
         var mItemView: LinearLayout
@@ -25,6 +28,14 @@ class FilesAdapter(var fileList: List<File>?, var mActivity: MainActivity) : Rec
             tv_namefile = view.findViewById(R.id.namefile)
             iv_Folder = view.findViewById(R.id.ivFolder)
             mItemView = view.findViewById(R.id.itemView)
+        }
+
+        override fun setRowDirectory(pVisibility: Int) {
+            iv_Folder.visibility = pVisibility
+        }
+
+        override fun setRowName(pName: String) {
+            tv_namefile.text = pName
         }
     }
 
@@ -36,49 +47,15 @@ class FilesAdapter(var fileList: List<File>?, var mActivity: MainActivity) : Rec
     }
 
     override fun onBindViewHolder(holder: MyViewHolder, position: Int) {
-        val vFile = fileList!![position]
-
-        //force if and else if on visibility for prevent bad recycling view
-        if (holder.itemViewType.equals(Constants.DIRECTORY)) {
-            holder.iv_Folder.visibility = View.VISIBLE
-        } else if (holder.itemViewType.equals(Constants.DIRECTORY)) {
-            holder.iv_Folder.visibility = View.GONE
-        }
-
-        if (vFile.extension.equals(Constants.DIRECTORY_STR)) {
-            holder.tv_namefile.setText(vFile.name)
-            holder.mItemView.setOnClickListener({
-                Constants.mPath += vFile.path!!
-                Log.d("url", Constants.mBaseUrl + Constants.mPath)
-                val vIntent = Intent(mActivity, MainActivity::class.java)
-                vIntent.putExtra(Constants.PATH, Constants.mPath)
-                vIntent.putExtra(Constants.TITLE, vFile.name)
-                vIntent.putExtra(Constants.TYPE_MEDIA, vFile.mediaType)
-                mActivity.startActivity(vIntent)
-            })
-        } else {
-            holder.tv_namefile.text = String.format(vFile.name + vFile.extension)
-            holder.mItemView.setOnClickListener({
-                val vIntent = Intent(mActivity, MediaActivity::class.java)
-                vIntent.putExtra(Constants.URL, vFile.url)
-                vIntent.putExtra(Constants.TITLE, vFile.name)
-                vIntent.putExtra(Constants.TYPE_MEDIA, vFile.mediaType)
-                vIntent.putExtra(Constants.MIMETYPE, vFile.mimetype)
-                mActivity.startActivity(vIntent)
-            })
-        }
-
+        mFilesAdapterPresenter.onBindViewHolder(holder, position)
     }
 
     override fun getItemCount(): Int {
-        return fileList!!.size
+        return mFilesAdapterPresenter.getItemCount()
     }
 
     override fun getItemViewType(position: Int): Int {
-        return if (fileList?.get(position)?.extension.equals(Constants.DIRECTORY_STR)) Constants.DIRECTORY else Constants.FILE
+        return mFilesAdapterPresenter.getItemViewType(position)
     }
 
-    init {
-        this.fileListFilter = fileList!!
-    }
 }

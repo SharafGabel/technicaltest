@@ -10,7 +10,7 @@
         android:supportsRtl="true"
         android:name=".App"
         android:theme="@style/Theme.AppCompat.DayNight.DarkActionBar">
-        <activity android:name=".MainActivity">
+        <activity android:name=".activity.FileExplorerActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -18,10 +18,10 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".MediaActivity"
+            android:name=".activity.MediaActivity"
             android:configChanges="orientation|screenSize" />
         <activity
-            android:name=".ParentActivity"
+            android:name=".activity.ParentActivity"
             android:configChanges="orientation|screenSize" />
     </application>
 

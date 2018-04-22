@@ -1,4 +1,4 @@
-package com.example.sgabel.myapplication
+package com.example.sgabel.myapplication.activity
 
 import android.content.ActivityNotFoundException
 import android.content.Intent
@@ -13,14 +13,19 @@ import android.widget.*
 import butterknife.BindView
 import butterknife.ButterKnife
 import com.bumptech.glide.Glide
-import com.example.sgabel.myapplication.api.ApiManager
+import com.example.sgabel.myapplication.App
+import com.example.sgabel.myapplication.R
+import com.example.sgabel.myapplication.api.RestApiItf
+import com.example.sgabel.myapplication.interactor.RxCallbackInteractor
 import com.example.sgabel.myapplication.model.MediaType
+import com.example.sgabel.myapplication.utils.Constants
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.schedulers.Schedulers
 import okhttp3.ResponseBody
 
-class MediaActivity : ParentActivity(), RxCallback<ResponseBody> {
+class MediaActivity : ParentActivity(), RxCallbackInteractor<ResponseBody> {
 
+    //region Attributes
     @BindView(R.id.playerView)
     lateinit var mVideoView: VideoView
 
@@ -29,7 +34,9 @@ class MediaActivity : ParentActivity(), RxCallback<ResponseBody> {
 
     @BindView(R.id.progressBar)
     lateinit var mProgressBar: ProgressBar
+    //endregion Attributes
 
+    //region Override methods
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.mediaview)
@@ -38,26 +45,18 @@ class MediaActivity : ParentActivity(), RxCallback<ResponseBody> {
         if (intent != null && intent.extras != null) {
             supportActionBar?.setDisplayHomeAsUpEnabled(true)
             setTitle(intent.extras.getString(Constants.TITLE))
+
             if (intent.extras.get(Constants.TYPE_MEDIA) != null) {
                 (application as App).getNetworkComponent().inject(this)
                 if (intent.extras.get(Constants.TYPE_MEDIA).equals(MediaType.VIDEO) || intent.extras.get(Constants.TYPE_MEDIA).equals(MediaType.AUDIO)) {
-                    mImageView.visibility = View.GONE
-                    mVideoView.visibility = View.VISIBLE
-                    mVideoView.setVideoURI(Uri.parse(intent.extras.getString(Constants.URL)))
-                    val vidControl = MediaController(this)
-                    vidControl.setAnchorView(mVideoView)
-                    mVideoView.setMediaController(vidControl);
-                    mVideoView.start()
+                    setViewVisibility(View.GONE, View.VISIBLE)
+                    launchAudioVideoAndAttachMediaControl()
                 } else if (intent.extras.get(Constants.TYPE_MEDIA).equals(MediaType.IMAGE_JPG_PNG)) {
-                    mImageView.visibility = View.VISIBLE
-                    mVideoView.visibility = View.GONE
-                    downloadFile(intent.extras.getString(Constants.URL), mImageView)
-
+                    setViewVisibility(View.VISIBLE, View.GONE)
+                    downloadFile(intent.extras.getString(Constants.URL))
                 } else if (intent.extras.get(Constants.TYPE_MEDIA).equals(MediaType.GIF)) {
-                    mImageView.visibility = View.VISIBLE
-                    mVideoView.visibility = View.GONE
+                    setViewVisibility(View.VISIBLE, View.GONE)
                     Glide.with(this).load(intent.extras.getString(Constants.URL)).into(mImageView);
-
                 } else {
                     launchMediaOutsideApplication(pUrl = intent.extras.getString(Constants.URL), pMimeType = intent.extras.getString(Constants.MIMETYPE))
                 }
@@ -67,32 +66,6 @@ class MediaActivity : ParentActivity(), RxCallback<ResponseBody> {
 
 
         }
-    }
-
-    fun launchMediaOutsideApplication(pUrl: String, pMimeType: String) {
-        try {
-            intent = Intent(Intent.ACTION_VIEW)
-            intent.setDataAndType(Uri.parse(pUrl), pMimeType)
-            startActivity(intent)
-            onBackPressed()
-        } catch (e: ActivityNotFoundException) {
-            Toast.makeText(applicationContext, getString(R.string.noApplicationFound), Toast.LENGTH_LONG).show()
-            onBackPressed()
-        }
-
-    }
-
-    fun downloadFile(pUrl: String?, pIv: ImageView) {
-
-        mRetrofit.create(ApiManager.RestApi::class.java)
-                .downloadFile(pUrl).subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(this::handleResultResponse, this::handleError)
-
-        Log.d("url used", pUrl)
-
-        mProgressBar.visibility = View.VISIBLE
-
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
@@ -110,18 +83,71 @@ class MediaActivity : ParentActivity(), RxCallback<ResponseBody> {
         Toast.makeText(applicationContext, "error receiving data : " + pThrowable.message, Toast.LENGTH_LONG).show()
     }
 
-    override fun handleResultResponse(pResponseBody: ResponseBody) {
-        Log.d("b", "body : " + pResponseBody)
+    override fun handleResultResponse(pResponse: ResponseBody) {
+        Log.d("b", "body : " + pResponse)
 
-        if (pResponseBody != null) {
-            val vBm = BitmapFactory.decodeStream(pResponseBody!!.byteStream())
+        if (pResponse != null) {
+            val vBm = BitmapFactory.decodeStream(pResponse.byteStream())
             mImageView.setImageBitmap(vBm)
-            mProgressBar.visibility = View.GONE
+            hideProgressBar()
         } else
             Toast.makeText(applicationContext, "no body response ", Toast.LENGTH_LONG).show()
     }
 
     override fun handleResultList(pList: List<ResponseBody>) {
     }
+    //endregion Override methods
+
+    //region LaunchMedia
+    private fun launchAudioVideoAndAttachMediaControl() {
+        mVideoView.setVideoURI(Uri.parse(intent.extras.getString(Constants.URL)))
+        val vidControl = MediaController(this)
+        vidControl.setAnchorView(mVideoView)
+        mVideoView.setMediaController(vidControl);
+        mVideoView.start()
+    }
+
+    fun launchMediaOutsideApplication(pUrl: String, pMimeType: String) {
+        try {
+            intent = Intent(Intent.ACTION_VIEW)
+            intent.setDataAndType(Uri.parse(pUrl), pMimeType)
+            startActivity(intent)
+            onBackPressed()
+        } catch (e: ActivityNotFoundException) {
+            Toast.makeText(applicationContext, getString(R.string.noApplicationFound), Toast.LENGTH_LONG).show()
+            onBackPressed()
+        }
+    }
+    //endregion LaunchMedia
+
+    //region WS
+    fun downloadFile(pUrl: String?) {
+
+        mRetrofit.create(RestApiItf::class.java)
+                .downloadFile(pUrl).subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(this::handleResultResponse, this::handleError)
+
+        Log.d("url used", pUrl)
+
+        showProgressBar()
+
+    }
+    //endregion WS
+
+    //region UI
+    fun setViewVisibility(pVisibilityImageview: Int, pVisibilityVideoView: Int) {
+        mImageView.visibility = pVisibilityImageview
+        mVideoView.visibility = pVisibilityVideoView
+    }
+
+    fun showProgressBar() {
+        mProgressBar.visibility = View.VISIBLE
+    }
+
+    fun hideProgressBar() {
+        mProgressBar.visibility = View.GONE
+    }
+    //endregion UI
 
 }

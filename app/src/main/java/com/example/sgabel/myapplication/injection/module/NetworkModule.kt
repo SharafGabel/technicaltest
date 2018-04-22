@@ -1,7 +1,7 @@
 package com.example.sgabel.myapplication.injection.module
 
 import android.app.Application
-import com.example.sgabel.myapplication.Constants
+import com.example.sgabel.myapplication.utils.Constants
 import com.google.gson.Gson
 import dagger.Module
 import dagger.Provides

@@ -1,8 +1,8 @@
-package com.example.sgabel.myapplication
+package com.example.sgabel.myapplication.interactor
 
 import okhttp3.ResponseBody
 
-interface RxCallback<T> {
+interface RxCallbackInteractor<T> {
     fun handleError(pThrowable: Throwable)
     fun handleResultList(pList: List<T>)
     fun handleResultResponse(pResponse: ResponseBody)

@@ -1,4 +1,4 @@
-package com.example.sgabel.myapplication
+package com.example.sgabel.myapplication.activity
 
 import android.os.Bundle
 import android.support.v4.widget.SwipeRefreshLayout
@@ -9,16 +9,22 @@ import android.util.Log
 import android.widget.Toast
 import butterknife.BindView
 import butterknife.ButterKnife
-import com.example.sgabel.myapplication.api.ApiManager
+import com.example.sgabel.myapplication.App
+import com.example.sgabel.myapplication.FilesAdapter
+import com.example.sgabel.myapplication.R
+import com.example.sgabel.myapplication.api.RestApiItf
+import com.example.sgabel.myapplication.interactor.RxCallbackInteractor
 import com.example.sgabel.myapplication.model.File
-import com.example.sgabel.myapplication.model.MediaType
+import com.example.sgabel.myapplication.utils.Constants
+import com.example.sgabel.myapplication.utils.Utils.Companion.addExtensionToFiles
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.schedulers.Schedulers
 import okhttp3.ResponseBody
 
 
-class MainActivity : ParentActivity(), SwipeRefreshLayout.OnRefreshListener, RxCallback<File> {
+class FileExplorerActivity : ParentActivity(), SwipeRefreshLayout.OnRefreshListener, RxCallbackInteractor<File> {
 
+    //region Attributes
     @BindView(R.id.recyclerview)
     lateinit var mRecyclerview: RecyclerView
 
@@ -28,12 +34,16 @@ class MainActivity : ParentActivity(), SwipeRefreshLayout.OnRefreshListener, RxC
     var mFilesAdapter: FilesAdapter? = null
 
     var mPath: String = ""
+    //endregion Attributes
 
+    //region override methods
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
         (application as App).getNetworkComponent().inject(this)
         ButterKnife.bind(this)
+
         mSwipeRefreshLayout.setOnRefreshListener(this)
 
         if (mPath.equals("")) {
@@ -59,34 +69,9 @@ class MainActivity : ParentActivity(), SwipeRefreshLayout.OnRefreshListener, RxC
 
     }
 
-
-    fun attachAdapterAndRecyclerview(pFiles: List<File>) {
-        mFilesAdapter = FilesAdapter(addExtensionToFiles(pFiles), this)
-
-        val mLayoutManager: RecyclerView.LayoutManager = LinearLayoutManager(getApplicationContext());
-
-        mRecyclerview.setLayoutManager(mLayoutManager);
-        mRecyclerview.setItemAnimator(DefaultItemAnimator())
-        mRecyclerview.setAdapter(mFilesAdapter)
-        mFilesAdapter!!.notifyDataSetChanged()
-    }
-
-    fun addExtensionToFiles(pListFile: List<File>): List<File> {
-        val vListTmp: MutableList<File> = ArrayList()
-        var vFile: File
-        for (file in pListFile) {
-            vFile = file
-            val vMap = AppUtils.extractTypeFromMimeType(file.mimetype)
-            vFile.extension = vMap.get(Constants.EXTENSION) as String?
-            vFile.mediaType = vMap.get(Constants.TYPE_MEDIA) as MediaType?
-            vListTmp.add(vFile)
-        }
-        return vListTmp
-    }
-
-    override fun handleResultList(pFiles: List<File>) {
-        if (pFiles != null) {
-            attachAdapterAndRecyclerview(pFiles)
+    override fun handleResultList(pList: List<File>) {
+        if (pList != null) {
+            attachAdapterAndRecyclerview(pList)
         } else
             Toast.makeText(applicationContext, "no body response ", Toast.LENGTH_LONG).show()
 
@@ -104,14 +89,6 @@ class MainActivity : ParentActivity(), SwipeRefreshLayout.OnRefreshListener, RxC
 
     }
 
-    fun getAllFiles(pPath: String) {
-        mRetrofit.create(ApiManager.RestApi::class.java)
-                .getFiles(pPath).subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(this::handleResultList, this::handleError)
-        Log.d("url used", Constants.mBaseUrl + pPath)
-    }
-
     /**
      * Refresh data from server
      */
@@ -126,5 +103,29 @@ class MainActivity : ParentActivity(), SwipeRefreshLayout.OnRefreshListener, RxC
         } catch (e: StringIndexOutOfBoundsException) {
         }
     }
+    //endregion override methods
+
+    //region WS call
+    fun getAllFiles(pPath: String) {
+        mRetrofit.create(RestApiItf::class.java)
+                .getFiles(pPath).subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(this::handleResultList, this::handleError)
+        Log.d("url used", Constants.mBaseUrl + pPath)
+    }
+    //endregion WS call
+
+    //region Adapter & RecyclerView
+    fun attachAdapterAndRecyclerview(pFiles: List<File>) {
+        mFilesAdapter = FilesAdapter(addExtensionToFiles(pFiles), this)
+
+        val mLayoutManager: RecyclerView.LayoutManager = LinearLayoutManager(getApplicationContext());
+
+        mRecyclerview.setLayoutManager(mLayoutManager);
+        mRecyclerview.setItemAnimator(DefaultItemAnimator())
+        mRecyclerview.setAdapter(mFilesAdapter)
+        mFilesAdapter!!.notifyDataSetChanged()
+    }
+    //endregion Adapter & RecyclerView
 
 }

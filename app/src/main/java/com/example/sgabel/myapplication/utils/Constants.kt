@@ -1,4 +1,4 @@
-package com.example.sgabel.myapplication
+package com.example.sgabel.myapplication.utils
 
 class Constants {
     companion object {

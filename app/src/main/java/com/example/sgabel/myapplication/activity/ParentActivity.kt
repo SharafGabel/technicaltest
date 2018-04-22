@@ -1,4 +1,4 @@
-package com.example.sgabel.myapplication
+package com.example.sgabel.myapplication.activity
 
 import android.support.v7.app.AppCompatActivity
 import android.view.MenuItem
@@ -16,6 +16,5 @@ open class ParentActivity : AppCompatActivity() {
         }
         return super.onOptionsItemSelected(item)
     }
-
 
 }

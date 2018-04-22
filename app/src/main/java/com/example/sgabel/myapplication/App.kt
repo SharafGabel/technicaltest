@@ -5,9 +5,9 @@ import com.example.sgabel.myapplication.injection.component.DaggerNetworkCompone
 import com.example.sgabel.myapplication.injection.component.NetworkComponent
 import com.example.sgabel.myapplication.injection.module.AppModule
 import com.example.sgabel.myapplication.injection.module.NetworkModule
+import com.example.sgabel.myapplication.utils.Constants
 
 class App : Application() {
-
 
     private val mNetworkComponent: NetworkComponent by lazy {
         DaggerNetworkComponent.builder()
